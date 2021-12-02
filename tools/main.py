@@ -9,17 +9,18 @@
 @License :   Copyright © 2017-2020 liuyuqi. All Rights Reserved.
 @Desc    :   github.com
 '''
-
+from pathlib import Path
 import shutil
 import os,sys,ctypes
 import datetime
 import get_ip_utils
 import platform
-
+from collections import defaultdict
 # 需要获取ip的网址
 sites = [
-    "github.global.ssl.fastly.net",
     "assets-cdn.github.com",
+    "github.com",
+    "github.global.ssl.fastly.net",
     "documentcloud.github.com",
     "gist.github.com",
     "gist.githubusercontent.com",
@@ -50,7 +51,7 @@ sites = [
     "github.community",
     "media.githubusercontent.com",
     "camo.githubusercontent.com",
-    "raw.githubusercontent.com", 
+    "raw.githubusercontent.com",
     "cloud.githubusercontent.com",
     "user-images.githubusercontent.com",
     "customer-stories-feed.github.com",
@@ -58,12 +59,12 @@ sites = [
     "api.github.com",
     "live.github.com",
     "githubapp.com",
-    "github.dev",
-    "github.com"
+    "github.dev"
 ]
 
-addr2ip = {}
+addr2ip = defaultdict(list)
 hostLocation = r"hosts"
+os.system("copy C:\\Windows\\System32\\drivers\\etc\\hosts hosts")
 
 def dropDuplication(line):
     flag = False
@@ -80,10 +81,11 @@ def dropDuplication(line):
 def updateHost():
     today = datetime.date.today()
     for site in sites:
-        trueip=get_ip_utils.getIpFromipapi(site)
-        if trueip != None:
-            addr2ip[site] = trueip
-            print(site + "\t" + trueip)
+        trueips=get_ip_utils.getIpFromIpaddress(site)
+        if len(trueips) > 0:
+            for trueip in trueips:
+                addr2ip[site].append(trueip)
+                print(site + "\t" + trueip)
     with open(hostLocation, "r") as f1:
         f1_lines = f1.readlines()
         with open("temphost", "w") as f2:
@@ -94,9 +96,13 @@ def updateHost():
                      str(today) + " update********************\n")
             f2.write("#******* get latest hosts: http://blog.yoqi.me/lyq/16489.html\n")
             for key in addr2ip:
-                f2.write(addr2ip[key] + "\t" + key + "\n")
+                for v in addr2ip[key]:
+                    f2.write(v + "\t" + key + "\n")
     os.remove(hostLocation)
-    os.rename("temphost",hostLocation)
+    os.rename("temphost", hostLocation)
+    # Path(hostLocation).replace("C:\\Windows\\System32\\drivers\\etc\\hosts")
+    os.system("move hosts C:\\Windows\\System32\\drivers\\etc\\hosts")
+    os.system("ipconfig /flushdns")
 
 if __name__ == "__main__":
     updateHost()
